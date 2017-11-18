@@ -12,6 +12,13 @@ namespace Surtur {
     public partial class Form1 : Form {
         public Form1() {
             InitializeComponent();
+            StorageInfo SI = new StorageInfoBuilder()
+                .SetDefaultPath("")
+                .NeedsPrompting(true)
+                .SetHandledName("")
+                .SetParent(null)
+                .Build();
         }
+        
     }
 }

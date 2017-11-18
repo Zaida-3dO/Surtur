@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Surtur {
     public class DirectoryHandler {
@@ -12,6 +10,9 @@ namespace Surtur {
         HashSet<string> _watchPath;
         HashSet<string> _ignoredPath;
         HashSet<string> _ignoredType;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DirectoryHandler"/> class.
+        /// </summary>
         public DirectoryHandler() {
             _dirHandler = new Dictionary<string, StorageInfo>();
             _watchPath = new HashSet<string>();
