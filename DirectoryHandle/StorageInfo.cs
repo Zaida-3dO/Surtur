@@ -2,12 +2,37 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Surtur {
+namespace Surtur_Core {
+    [Serializable]
     public class StorageInfo {
+        /// <summary>
+        /// Gets the Storage info with this as it's child.
+        /// </summary>
+        /// <value>
+        /// The parent.
+        /// </value>
         public StorageInfo Parent { get; }
+        /// <summary>
+        /// Gets or sets the Type beign handled
+        /// </summary>
+        /// <value>
+        /// The handled Type.
+        /// </value>
         public string Handlee { get; set; }
-        bool NeedsPrompt { get; set; }
-        string DefaultPath { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether this storage info Can Sort itself out
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [needs prompt]; otherwise, <c>false</c>.
+        /// </value>
+        public bool NeedsPrompt { get; set; }
+        /// <summary>
+        /// Gets or sets the default path.
+        /// </summary>
+        /// <value>
+        /// The default path.
+        /// </value>
+        public string DefaultPath { get; set; }
         Dictionary<string, StorageInfo> children;
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageInfo" /> class.
@@ -29,8 +54,9 @@ namespace Surtur {
         /// <param name="SI">The storage info.</param>
         public void SetHandler(string Type, StorageInfo SI) {
             if (children.ContainsKey(Type))
-                children[Type] = SI;
-            children.Add(Type, SI);
+                children[Type].DefaultPath = SI.DefaultPath;
+            else
+               children.Add(Type, SI);
         }
         /// <summary>
         /// Removes the handler.
@@ -38,7 +64,7 @@ namespace Surtur {
         /// <param name="Type">The type.</param>
         /// <exception cref="NotSupportedException"></exception>
         public void RemoveHandler(string Type) {
-            if (children.ContainsKey(Type))
+            if (!children.ContainsKey(Type))
                 throw new NotSupportedException(Type + " is not handled");
             children.Remove(Type);
         }

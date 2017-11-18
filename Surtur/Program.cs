@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Surtur_Core;
 using System.Windows.Forms;
 
 namespace Surtur {
@@ -13,7 +11,20 @@ namespace Surtur {
         static void Main() {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            DirectoryHandler DH = LoadDH();
+            Application.Run(new AddScanDir(DH));
+        }
+        static DirectoryHandler LoadDH() {
+            try {
+                return DirectoryHandler.Load(@"C:\ProgramData\Sorter.srtr");
+            } catch {
+                try {
+                    return DirectoryHandler.Load(@"C:\ProgramData\Sorter.srtr.temp");
+                } catch {
+                    return new DirectoryHandler();
+                }
+            }
+            
         }
     }
 }

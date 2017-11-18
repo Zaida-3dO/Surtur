@@ -4,7 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace Surtur {
+namespace Surtur_Core {
+    [Serializable]
     public class DirectoryHandler {
         Dictionary<string, StorageInfo> _dirHandler;
         HashSet<string> _watchPath;
@@ -25,9 +26,10 @@ namespace Surtur {
         /// <param name="Type">The type.</param>
         /// <param name="SI">The storage detai;ls.</param>
         public void SetHandler(string Type,StorageInfo SI) {
-            if (_dirHandler.ContainsKey(Type))
-                _dirHandler[Type] = SI;
-            _dirHandler.Add(Type, SI);
+            if (_dirHandler.ContainsKey(Type)) 
+                _dirHandler[Type].DefaultPath = SI.DefaultPath;
+            else
+                _dirHandler.Add(Type, SI);
         }
         /// <summary>
         /// Removes the handler.
@@ -35,7 +37,7 @@ namespace Surtur {
         /// <param name="Type">The type.</param>
         /// <exception cref="NotSupportedException"></exception>
         public void RemoveHandler(string Type) {
-            if (_dirHandler.ContainsKey(Type))
+            if (!_dirHandler.ContainsKey(Type))
                 throw new NotSupportedException(Type + " is not handled");
             _dirHandler.Remove(Type);
         }
@@ -125,24 +127,17 @@ namespace Surtur {
         /// Serializes and saves this instance of DH to the specified path.
         /// </summary>
         /// <param name="path">The path.</param>
-        /// <exception cref="Exception">
-        /// Could not acquire Lock on "+path+"\n this is Likely because another app is using it
+        /// <exception cref="FieldAccessException">Could not acquire Lock on "+path+" this is Likely because another app is using it</exception>
+        /// <exception cref="Exception">Could not acquire Lock on "+path+"\n this is Likely because another app is using it
         /// or
-        /// An error Occured, Could not save DH
-        /// </exception>
+        /// An error Occured, Could not save DH</exception>
         public void Save(string path) {
-            try {
-                File.SetAttributes(path, File.GetAttributes(path) & ~FileAttributes.ReadOnly);
-            } catch {
-                throw new Exception("Could not acquire Lock on "+path+"\n this is Likely because another app is using it");
-            }
             try {
                 using (FileStream fsout = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None)) {
                     new BinaryFormatter().Serialize(fsout, this);
-                    File.SetAttributes(path, (File.GetAttributes(path) | FileAttributes.ReadOnly));
                 }
-            } catch {
-                throw new Exception("An error Occured, Could not save DH");
+            } catch (Exception ex){
+                throw new Exception("An error Occured, Could not save DH :"+path,ex);
             }
         }
         /// <summary>
@@ -156,6 +151,7 @@ namespace Surtur {
             try {
                 using (FileStream fsin = new FileStream(pathToSerialized, FileMode.Open, FileAccess.Read, FileShare.None)) {
                     l = (DirectoryHandler)(new BinaryFormatter().Deserialize(fsin));
+                    fsin.Close();
                 }
             } catch (FileNotFoundException) {
                 throw new FileNotFoundException("The file at the path doesn't contain a valid Serialized DH");
