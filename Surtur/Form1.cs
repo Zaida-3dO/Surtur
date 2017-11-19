@@ -14,7 +14,6 @@ namespace Surtur {
         String SelectedIgnoreType;
         public AddScanDir(DirectoryHandler DH) {
             this.DH = DH;
-            
             InitializeComponent();
             Fresh();
         }
@@ -122,7 +121,6 @@ namespace Surtur {
                     return;
                 string fullPath = SelectedNode.FullPath;
                 string[] nodes = fullPath.Split(new char[] { '\\' });
-               // HandlerTree.Nodes.Remove(SelectedNode);
                 if (nodes.Length == 1) {
                     DH.RemoveHandler(nodes[0]);
                 } else {
@@ -165,9 +163,9 @@ namespace Surtur {
             TypeName.Text = si.Handlee;
         }
         void Save() {
-            DH.Save(@"C:\ProgramData\Sorter.srtr.temp");
-            File.Delete(@"C:\ProgramData\Sorter.srtr");
-            File.Move(@"C:\ProgramData\Sorter.srtr.temp", @"C:\ProgramData\Sorter.srtr");
+            DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
+            File.Delete(@"C:\ProgramData\surtur\Sorter.srtr");
+            File.Move(@"C:\ProgramData\surtur\Sorter.srtr.temp", @"C:\ProgramData\surtur\Sorter.srtr");
         }
 
         private void Button3_Click(object sender, EventArgs e) {
@@ -191,8 +189,9 @@ namespace Surtur {
                 return;
             if (!AreYouSure(SelectedWatchPath, "Watched Directories"))
                 return;
-            listBox1.Items.Remove(SelectedWatchPath);
             DH.RemovePath(SelectedWatchPath);
+            listBox1.Items.Remove(SelectedWatchPath);
+            
             Save();
         }
         private void ListBox1_SelectedIndexChanged(object sender, EventArgs e) {
@@ -219,19 +218,21 @@ namespace Surtur {
                 return;
             if (!AreYouSure(SelectedIgnorePath, "Ignored Directories"))
                 return;
+            DH.RemoveIgnorePath(SelectedIgnorePath);
             listBox2.Items.Remove(SelectedIgnorePath);
-            DH.RemovePath(SelectedIgnorePath);
+            
             Save();
         }
 
         private void Button5_Click(object sender, EventArgs e) {
             //Remove ignore type
-            if (SelectedIgnorePath == null || string.IsNullOrEmpty(SelectedIgnoreType))
+            if (SelectedIgnoreType == null || string.IsNullOrEmpty(SelectedIgnoreType))
                 return;
             if (!AreYouSure(SelectedIgnoreType, "Ignored Types"))
                 return;
+            DH.RemoveIgnoreType(SelectedIgnoreType);
             listBox3.Items.Remove(SelectedIgnoreType);
-            DH.RemovePath(SelectedIgnoreType);
+            
             Save();
         }
 
@@ -275,6 +276,7 @@ namespace Surtur {
             if (DH.AllIgnoredTypes.Contains(ans)) return;
             listBox3.Items.Add(ans);
             DH.AddIgnoreType(ans);
+            Save();
         }
     }
 }

@@ -135,6 +135,7 @@ namespace Surtur_Core {
             try {
                 using (FileStream fsout = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None)) {
                     new BinaryFormatter().Serialize(fsout, this);
+                    fsout.Close();
                 }
             } catch (Exception ex){
                 throw new Exception("An error Occured, Could not save DH :"+path,ex);

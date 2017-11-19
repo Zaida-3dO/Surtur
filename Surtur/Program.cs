@@ -16,10 +16,10 @@ namespace Surtur {
         }
         static DirectoryHandler LoadDH() {
             try {
-                return DirectoryHandler.Load(@"C:\ProgramData\Sorter.srtr");
+                return DirectoryHandler.Load(@"C:\ProgramData\surtur\Sorter.srtr");
             } catch {
                 try {
-                    return DirectoryHandler.Load(@"C:\ProgramData\Sorter.srtr.temp");
+                    return DirectoryHandler.Load(@"C:\ProgramData\surtur\Sorter.srtr.temp");
                 } catch {
                     return new DirectoryHandler();
                 }
