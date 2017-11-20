@@ -11,14 +11,42 @@ namespace Surtur_Core {
         HashSet<string> _watchPath;
         HashSet<string> _ignoredPath;
         HashSet<string> _ignoredType;
+        public string RecentlySelectedPath { get { return _recentPath; }set { if (Directory.Exists(value))_recentPath = value;  } }
+        string _recentPath;
+        HashSet<string> _Queue;
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectoryHandler"/> class.
         /// </summary>
         public DirectoryHandler() {
             _dirHandler = new Dictionary<string, StorageInfo>();
+            RecentlySelectedPath = "";
+            _Queue = new HashSet<string>();
             _watchPath = new HashSet<string>();
             _ignoredPath = new HashSet<string>();
             _ignoredType = new HashSet<string>();
+        }
+        /// <summary>
+        /// Pushes the specified path into the Queue.
+        /// </summary>
+        /// <param name="enque">The item to enque.</param>
+        public void Push(string enque) {
+            _Queue.Add(enque);
+        }
+        /// <summary>
+        /// Pops the path at the top of the Queue.
+        /// </summary>
+        /// <returns>The Path first in the Queue</returns>
+        public string Pop() {
+            string ans = _Queue.First();
+            _Queue.Remove(_Queue.First());
+            return ans;
+        }
+        /// <summary>
+        /// A Queue of all items waiting to be handled
+        /// </summary>
+        /// <returns>A list of all paths in the queue</returns>
+        public List<string> Queue() {
+            return _Queue.ToList();
         }
         /// <summary>
         /// Handles the specified type.

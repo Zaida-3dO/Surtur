@@ -171,11 +171,13 @@ namespace Surtur {
         private void Button3_Click(object sender, EventArgs e) {
             //Add watch Path
             FolderBrowserDialog fbd = new FolderBrowserDialog {
-                RootFolder = Environment.SpecialFolder.UserProfile,
                 Description = "Add a path to be Scanned",
                 ShowNewFolderButton = false
             };
-            fbd.ShowDialog();
+            if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
+                fbd.SelectedPath = DH.RecentlySelectedPath;
+            if (!(fbd.ShowDialog() == DialogResult.OK)) return;
+            DH.RecentlySelectedPath = fbd.SelectedPath;
             if (string.IsNullOrWhiteSpace(fbd.SelectedPath)||DH.AllWatchedPaths.Contains(fbd.SelectedPath))
                 return;
             DH.AddPath(fbd.SelectedPath);
@@ -239,11 +241,13 @@ namespace Surtur {
         private void Button7_Click(object sender, EventArgs e) {
             //Add watch Path
             FolderBrowserDialog fbd = new FolderBrowserDialog {
-                RootFolder = Environment.SpecialFolder.UserProfile,
                 Description = "Add a path to be Ignored",
                 ShowNewFolderButton = false
             };
-            fbd.ShowDialog();
+            if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
+                fbd.SelectedPath = DH.RecentlySelectedPath;
+            if(!(fbd.ShowDialog()==DialogResult.OK))return;
+            DH.RecentlySelectedPath = fbd.SelectedPath;
             if (string.IsNullOrWhiteSpace(fbd.SelectedPath)||DH.AllIgnoredPaths.Contains(fbd.SelectedPath))
                 return;
             DH.AddIgnorePath(fbd.SelectedPath);
@@ -254,11 +258,13 @@ namespace Surtur {
         private void Button9_Click(object sender, EventArgs e) {
             //New Path
             FolderBrowserDialog fbd = new FolderBrowserDialog {
-                RootFolder = Environment.SpecialFolder.UserProfile,
                 Description = "Select Path to Save this type to",
                 ShowNewFolderButton = true
             };
-            fbd.ShowDialog();
+            if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
+                fbd.SelectedPath = DH.RecentlySelectedPath;
+            if (!(fbd.ShowDialog() == DialogResult.OK)) return;
+            DH.RecentlySelectedPath = fbd.SelectedPath;
             NewPath.Text=fbd.SelectedPath;
         }
 
