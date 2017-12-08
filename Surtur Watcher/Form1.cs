@@ -7,33 +7,11 @@ using System.IO;
 using Surtur;
 
 namespace Surtur_Watcher {
-    //Recheck file after a while(after a read error
-    //timeout
-    //Move from source to source
-    //Scan
+ 
     public partial class Form1 : Form {
-        DirectoryHandler DH;
-        bool busy;
+        
         public Form1() {
             InitializeComponent();
-            busy = false;
-            Reload();
-        }
-        List<FileSystemWatcher> Dlist;
-        void Init() {
-            for (int i = 0; i < Dlist.Count; i++) {
-                Dlist[i] = null;
-            }
-            Dlist.Clear();
-            foreach (string path in DH.AllWatchedPaths) {
-
-                FileSystemWatcher fsw = new FileSystemWatcher(path) {
-                    EnableRaisingEvents = true,
-                    SynchronizingObject = this
-                };
-                fsw.Created += new FileSystemEventHandler(FileSystemWatcher1_Created);
-                Dlist.Add(fsw);
-            }
         }
 
         private void Form1_Load(object sender, EventArgs e) {
@@ -52,32 +30,7 @@ namespace Surtur_Watcher {
             this.Hide();
         }
 
-        private void FileSystemWatcher1_Created(object sender, FileSystemEventArgs e) {
-            foreach (string ignore in DH.AllIgnoredPaths)
-                if (e.FullPath.Equals(ignore))
-                    return;
-            string Type = Path.GetExtension(e.Name);
-            if (Type.StartsWith("."))
-                Type = Type.Substring(1);
-            if (DH.AllIgnoredTypes.Contains(Type)) {
-                LogTransfers("Ignored " + e.Name + " due to file type");
-                return;
-            }
-            
-                if (busy) {
-                    DH.Push(e.FullPath);
-                    //TODO code to add duplicate to listbox
-                    //TODO figure this async shii out
-                } else {
-                    DH.Push(e.FullPath);
-                    busy = true;
-                    HandleQueue();
-
-                }
-            
-
-
-        }
+      
         void HandleQueue() {
             string FullPath = DH.Pop();
             string Name = Path.GetFileName(FullPath);
@@ -213,12 +166,7 @@ namespace Surtur_Watcher {
             DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
             DH.Save(@"C:\ProgramData\surtur\Sorter.srtr");
         }
-        void LogTransfers(string file, string from, string to) {
-            File.AppendAllText(@"C:\ProgramData\surtur\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
-        }
-        void LogTransfers(string logText) {
-            File.AppendAllText(@"C:\ProgramData\surtur\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
-        }
+      
 
         void Reload() {
             try {
