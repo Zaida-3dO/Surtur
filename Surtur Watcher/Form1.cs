@@ -9,9 +9,12 @@ using Surtur;
 namespace Surtur_Watcher {
  
     public partial class Form1 : Form {
-        
+        Watcher surtur;
+
+
         public Form1() {
             InitializeComponent();
+            surtur = new Watcher(@"C:\ProgramData\surtur\Sorter.srtr", this);
         }
 
         private void Form1_Load(object sender, EventArgs e) {
@@ -24,83 +27,14 @@ namespace Surtur_Watcher {
             notifyIcon1.ShowBalloonTip(1000);
         }
 
-        private void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e) {
-            AddScanDir CP = new AddScanDir(DH);
+       void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e) {
+            AddScanDir CP = new AddScanDir(surtur.DH);
             CP.Show();
             this.Hide();
         }
 
       
-        void HandleQueue() {
-            string FullPath = DH.Pop();
-            string Name = Path.GetFileName(FullPath);
-            string Type = Path.GetExtension(Name);
-            if (Type.StartsWith("."))
-                Type = Type.Substring(1);
-            if (DH.AllHandledTypes.Contains(Type)) {
-                if (DH.GetHandle(Type).NeedsPrompt) {
-                    this.Show();
-                    this.BringToFront();
-                    this.WindowState = FormWindowState.Normal;
-                  /* if (DH.Queue().Count > 0) {
-                        checkedListBox1.Items.Clear();
-                        foreach (string QPath in DH.Queue()) {
-                            string QP;
-                            if (QPath.StartsWith("."))
-                                QP = QPath.Substring(1);
-                            else
-                                QP = QPath;
-                            if (QP.Equals(Type))
-                                checkedListBox1.Items.Add(QPath);
-                        }
-                        checkBox2.Visible = true;
-                        checkedListBox1.Visible = true;
-                    } else {
-                        checkBox2.Visible = false;
-                        checkedListBox1.Visible = false;
-                    }*/
-                    TypeName.Text = FullPath;
-                    //PromptCall(e);
-                    SI_Click(DH.GetHandle(Type));
-                } else {
-                    string from = FullPath;
-                    string to = DH.GetHandle(Type).DefaultPath + "\\" + Name;
-                    try {
-                        File.Move(from, to);
-                        notifyIcon1.ShowBalloonTip(1000, "Auto-Moved " + Name, " Succesfully Moved " + Name + " to " + to, ToolTipIcon.Info);
-                        LogTransfers(Name, from, to);
-                    } catch (Exception ex) {
-                        LogTransfers("An Error Occured: when Moving " + from + ":" + ex.Message);
-                       // DH.Push(from);
-                    }
-
-                }
-            } else {
-                FolderBrowserDialog fbd = new FolderBrowserDialog {
-                    Description= Type+" Sort. Organize your Folders, where would you like to store ."+Type+" files. (To ignore these files, or change your settings Open Surtur by clicking the icon in your Tray.)",
-                    ShowNewFolderButton = true
-                };
-                if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
-                    fbd.SelectedPath = DH.RecentlySelectedPath;
-                if ((fbd.ShowDialog() == DialogResult.OK)) {
-                    DH.RecentlySelectedPath = fbd.SelectedPath;
-                    DH.SetHandler(Type, new StorageInfoBuilder()
-                                            .SetDefaultPath(fbd.SelectedPath)
-                                            .NeedsPrompting(false)
-                                            .SetHandledName(Type)
-                                            .SetParent(null)
-                                            .Build());
-                    notifyIcon1.ShowBalloonTip(1000, "Moving " + Type, "To change, Click here, Files of type " + Type + " will now be moved to " + fbd.SelectedPath, ToolTipIcon.Info);
-                    DH.Push(FullPath);
-                    HandleQueue();
-                    //Save();
-                }
-            }
-            if (DH.Queue().Count > 0)
-                HandleQueue();
-            else
-                busy = false;
-        }
+       
         void PromptCall(FileSystemEventArgs e) {
             flowLayoutPanel1.Controls.Clear();
             string type = Path.GetExtension(e.Name);
@@ -163,25 +97,17 @@ namespace Surtur_Watcher {
             flowLayoutPanel1.Controls.Add(btn2);
         }
         void Save() {
+            try {
+                surtur.save();
+            }catch (Exception wx) {
+                //TODO logerror
+            }
             DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
             DH.Save(@"C:\ProgramData\surtur\Sorter.srtr");
         }
       
 
-        void Reload() {
-            try {
-                DH =  DirectoryHandler.Load(@"C:\ProgramData\surtur\Sorter.srtr");
-            } catch {
-                try {
-                    DH =  DirectoryHandler.Load(@"C:\ProgramData\surtur\Sorter.srtr.temp");
-                } catch {
-                    DH =  new DirectoryHandler();
-                }
-            }
-            Dlist = new List<FileSystemWatcher>();
-                Init();
-          
-        }
+       
 
         private void LiveToolStripMenuItem_Click(object sender, EventArgs e) {
             AddScanDir CP = new AddScanDir(DH);
@@ -206,8 +132,8 @@ namespace Surtur_Watcher {
         private void Button1_Click(object sender, EventArgs e) {
             if (checkBox1.Checked) {
                 if (MessageBox.Show("You, clicked ignore,Are you Sure you want to Leave this file unsorted, you can always change later in the Menu", "Confirm Ignore", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                    DH.AddIgnorePath(TypeName.Text);
-                    LogTransfers(TypeName.Text + " added to ignore List");
+                    DH.AddIgnorePath(FoundFile);
+                    LogTransfers(FoundFile + " added to ignore List");
                     this.Hide();
                     checkedListBox1.Items.Clear();
                     checkedListBox1.Visible = false;
@@ -219,9 +145,9 @@ namespace Surtur_Watcher {
                 }
                 return;
             }
-            if (MessageBox.Show("Are you sure you want to Move "+ TypeName.Text+((checkedListBox1.CheckedItems.Count>0)?"and "+ checkedListBox1.CheckedItems.Count+" more":"")+" to "+movePath.Text, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                LogTransfers(Path.GetFileName(TypeName.Text), TypeName.Text, movePath.Text);
-                File.Move(TypeName.Text, movePath.Text+"\\"+Path.GetFileName(TypeName.Text));
+            if (MessageBox.Show("Are you sure you want to Move "+ FoundFile+((checkedListBox1.CheckedItems.Count>0)?"and "+ checkedListBox1.CheckedItems.Count+" more":"")+" to "+movePath.Text, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                LogTransfers(Path.GetFileName(FoundFile), FoundFile, movePath.Text);
+                File.Move(FoundFile, movePath.Text+"\\"+Path.GetFileName(FoundFile));
                 if(checkedListBox1.CheckedItems.Count > 0) {
                     foreach (string pathTo in checkedListBox1.CheckedItems) {
                         LogTransfers(Path.GetFileName(pathTo), pathTo, movePath.Text);
@@ -237,80 +163,9 @@ namespace Surtur_Watcher {
                 else
                     busy = false;
             }
+            
         }
-        void SI_Click(StorageInfo si) {
-            flowLayoutPanel1.Controls.Clear();
-            movePath.Text = si.DefaultPath;
-            Type.Text = si.Handlee;
-            if (si.Parent != null) {
-                Button btn4 = new Button {
-                    Text = "...",
-                    Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                    Height = 50,
-                    AutoSize = true
-                };
-                btn4.Click += new EventHandler((o, a) => {
-                    SI_Click(si.Parent);
-                });
-                flowLayoutPanel1.Controls.Add(btn4);
-            }
-            if (si.NeedsPrompt)
-                foreach (string sub in si.AllHandledTypes) {
-                    Button btn = new Button {
-                        Text = sub,
-                        Height = 50,
-                        AutoSize = true
-                    };
-                    btn.Click += new EventHandler((o, a) => {
-                        SI_Click(si.GetHandle(sub));
-                    });
-                    flowLayoutPanel1.Controls.Add(btn);
-                }
-            Button btn2 = new Button {
-                Text = "+",
-                Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                Height = 50,
-                AutoSize = true
-            };
-            btn2.Click += new EventHandler((o, a) => {
-                string newType = Interaction.InputBox("Enter a file Type to Add under " + si.Handlee, "Add Type", "");
-                string newPath = "";
-                if (!string.IsNullOrWhiteSpace(newType)) {
-                    FolderBrowserDialog fbd = new FolderBrowserDialog {
-                        Description = "Select Path to Save this type to",
-                        ShowNewFolderButton = true
-                    };
-                    if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
-                        fbd.SelectedPath = DH.RecentlySelectedPath;
-                    if (!(fbd.ShowDialog() == DialogResult.OK)) return;
-                    DH.RecentlySelectedPath = fbd.SelectedPath;
-                    newPath = fbd.SelectedPath;
-                }
-                if (!string.IsNullOrWhiteSpace(newPath)) {
-                    si.NeedsPrompt = true;
-                    si.SetHandler(newType, new StorageInfoBuilder()
-                                        .SetDefaultPath(newPath)
-                                        .NeedsPrompting(false)
-                                        .SetHandledName(newType)
-                                        .SetParent(si)
-                                        .Build());
-                    Button btn3 = new Button {
-                        Text = newType,
-                        Height = 50,
-                        AutoSize = true
-                    };
-                    btn3.Click += new EventHandler((od, ad) => {
-                        SI_Click(si.GetHandle(newType));
-                    });
-                    flowLayoutPanel1.Controls.Remove(btn2);
-                    flowLayoutPanel1.Controls.Add(btn3);
-                    flowLayoutPanel1.Controls.Add(btn2);
-
-                    Save();
-                }
-            });
-            flowLayoutPanel1.Controls.Add(btn2);
-        }
+     
 
         private void CheckBox2_CheckedChanged(object sender, EventArgs e) {
             if (checkBox2.Checked) {
