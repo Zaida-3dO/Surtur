@@ -27,150 +27,15 @@ namespace Surtur_Watcher {
             notifyIcon1.ShowBalloonTip(1000);
         }
 
-       void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e) {
-            AddScanDir CP = new AddScanDir(surtur.DH);
-            CP.Show();
-            this.Hide();
-        }
+   
 
-      
-       
-        void PromptCall(FileSystemEventArgs e) {
-            flowLayoutPanel1.Controls.Clear();
-            string type = Path.GetExtension(e.Name);
-            if (type.StartsWith("."))
-                type = type.Substring(1);
-
-            Type.Text = type;
-            movePath.Text = DH.GetHandle(type).DefaultPath;
-            foreach (string sub in DH.GetHandle(type).AllHandledTypes) {
-                Button btn = new Button {
-                    Text = sub,
-                    Height = 50,
-                    AutoSize = true
-                };
-                btn.Click += new EventHandler((o, a) => {
-                    SI_Click(DH.GetHandle(type).GetHandle(sub));
-                });
-                flowLayoutPanel1.Controls.Add(btn);
-            }
-            Button btn2 = new Button {
-                Text = "+",
-                Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                Height = 50,
-                AutoSize = true
-            };
-            btn2.Click += new EventHandler((o, a) => {
-                string newType = Interaction.InputBox("Enter a file Type to Add under " + type, "Add Type", "");
-                string newPath = "";
-                if (!string.IsNullOrWhiteSpace(newType)) {
-                    FolderBrowserDialog fbd = new FolderBrowserDialog {
-                        Description = "Select Path to Save this type to",
-                        ShowNewFolderButton = true
-                    };
-                    fbd.ShowDialog();
-                    newPath = fbd.SelectedPath;
-                }
-                if (!string.IsNullOrWhiteSpace(newPath)) {
-                    DH.GetHandle(type).NeedsPrompt = true;
-                    DH.GetHandle(type).SetHandler(newType, new StorageInfoBuilder()
-                                        .SetDefaultPath(newPath)
-                                        .NeedsPrompting(false)
-                                        .SetHandledName(newType)
-                                        .SetParent(null)
-                                        .Build());
-                    Button btn3 = new Button {
-                        Text = newType,
-                        Height = 50,
-                        AutoSize = true
-                    };
-                    btn3.Click += new EventHandler((od, ad) => {
-                        SI_Click(DH.GetHandle(type).GetHandle(newType));
-                    });
-                    flowLayoutPanel1.Controls.Remove(btn2);
-                    flowLayoutPanel1.Controls.Add(btn3);
-                    flowLayoutPanel1.Controls.Add(btn2);
-
-                    Save();
-                }
-            });
-            flowLayoutPanel1.Controls.Add(btn2);
-        }
-        void Save() {
-            try {
-                surtur.save();
-            }catch (Exception wx) {
-                //TODO logerror
-            }
-            DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
-            DH.Save(@"C:\ProgramData\surtur\Sorter.srtr");
-        }
-      
-
-       
-
-        private void LiveToolStripMenuItem_Click(object sender, EventArgs e) {
-            AddScanDir CP = new AddScanDir(DH);
-            CP.Show();
-            this.Hide();
-            WindowState = FormWindowState.Normal;
-        }
-
-        private void FileSystemWatcher1_Renamed(object sender, RenamedEventArgs e) {
-            if (e.Name.Equals("Sorter.srtr")) {
-                Reload();
-            }
-        }
-
-        private void ExitToolStripMenuItem1_Click(object sender, EventArgs e) {
-            if (MessageBox.Show("Are you Sure you want to close surtur", "Confirm Close", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                this.Close();
-            }
-
-        }
-
-        private void Button1_Click(object sender, EventArgs e) {
-            if (checkBox1.Checked) {
-                if (MessageBox.Show("You, clicked ignore,Are you Sure you want to Leave this file unsorted, you can always change later in the Menu", "Confirm Ignore", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                    DH.AddIgnorePath(FoundFile);
-                    LogTransfers(FoundFile + " added to ignore List");
-                    this.Hide();
-                    checkedListBox1.Items.Clear();
-                    checkedListBox1.Visible = false;
-                    checkBox2.Visible = false;
-                    if (DH.Queue().Count > 0)
-                        HandleQueue();
-                    else
-                        busy = false;
-                }
-                return;
-            }
-            if (MessageBox.Show("Are you sure you want to Move "+ FoundFile+((checkedListBox1.CheckedItems.Count>0)?"and "+ checkedListBox1.CheckedItems.Count+" more":"")+" to "+movePath.Text, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                LogTransfers(Path.GetFileName(FoundFile), FoundFile, movePath.Text);
-                File.Move(FoundFile, movePath.Text+"\\"+Path.GetFileName(FoundFile));
-                if(checkedListBox1.CheckedItems.Count > 0) {
-                    foreach (string pathTo in checkedListBox1.CheckedItems) {
-                        LogTransfers(Path.GetFileName(pathTo), pathTo, movePath.Text);
-                        File.Move(pathTo, movePath.Text + "\\" + Path.GetFileName(pathTo));
-                    }
-                }
-                this.Hide();
-                checkedListBox1.Items.Clear();
-                checkedListBox1.Visible = false;
-                checkBox2.Visible = false;
-                if (DH.Queue().Count > 0)
-                    HandleQueue();
-                else
-                    busy = false;
-            }
-        }
         void UpdateQueue() {
             //TODO clear check on load page
             checkBox2.Visible = checkedListBox1.Visible = (surtur.QueueList.Count > 0);
             checkedListBox1.Items.Clear();
             //TODO persistent checks after add
-            if(surtur.QueueList.Count > 0) {
-                foreach(string item in surtur.QueueList) {
+            if (surtur.QueueList.Count > 0) {
+                foreach (string item in surtur.QueueList) {
                     checkedListBox1.Items.Add(item);
                 }
             }
@@ -231,17 +96,17 @@ namespace Surtur_Watcher {
             flowLayoutPanel1.Controls.Add(btn2);
         }
         Button GenerateButton(string sub) {
-                Button btn = new Button {
-                    Text = sub,
-                    Height = 50,
-                    AutoSize = true
-                };
-                btn.Click += new EventHandler((o, a) => {
-                    surtur.NavigateTo(surtur.CurrentlyWatched.GetHandle(sub));
-                });
+            Button btn = new Button {
+                Text = sub,
+                Height = 50,
+                AutoSize = true
+            };
+            btn.Click += new EventHandler((o, a) => {
+                surtur.NavigateTo(surtur.CurrentlyWatched.GetHandle(sub));
+            });
             return btn;
         }
-     
+
 
         private void CheckBox2_CheckedChanged(object sender, EventArgs e) {
             if (checkBox2.Checked) {
@@ -254,5 +119,63 @@ namespace Surtur_Watcher {
                     checkedListBox1.SetItemChecked(i, false);
             }
         }
+
+
+        void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e) {
+            CPToolStripMenuItem_Click(sender, e);
+        }
+
+
+        private void CPToolStripMenuItem_Click(object sender, EventArgs e) {
+            AddScanDir CP = new AddScanDir(surtur.DH);
+            CP.Show();
+            this.Hide();
+        }
+
+       
+
+        private void ExitToolStripMenuItem1_Click(object sender, EventArgs e) {
+            if (MessageBox.Show("Are you Sure you want to close surtur", "Confirm Close", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                this.Close();
+            }
+
+        }
+
+        private void Button1_Click(object sender, EventArgs e) {
+            if (checkBox1.Checked) {
+                if (MessageBox.Show("You, clicked ignore,Are you Sure you want to Leave this file unsorted, you can always change later in the Menu", "Confirm Ignore", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                    DH.AddIgnorePath(FoundFile);
+                    LogTransfers(FoundFile + " added to ignore List");
+                    this.Hide();
+                    checkedListBox1.Items.Clear();
+                    checkedListBox1.Visible = false;
+                    checkBox2.Visible = false;
+                    if (DH.Queue().Count > 0)
+                        HandleQueue();
+                    else
+                        busy = false;
+                }
+                return;
+            }
+            if (MessageBox.Show("Are you sure you want to Move "+ FoundFile+((checkedListBox1.CheckedItems.Count>0)?"and "+ checkedListBox1.CheckedItems.Count+" more":"")+" to "+movePath.Text, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                LogTransfers(Path.GetFileName(FoundFile), FoundFile, movePath.Text);
+                File.Move(FoundFile, movePath.Text+"\\"+Path.GetFileName(FoundFile));
+                if(checkedListBox1.CheckedItems.Count > 0) {
+                    foreach (string pathTo in checkedListBox1.CheckedItems) {
+                        LogTransfers(Path.GetFileName(pathTo), pathTo, movePath.Text);
+                        File.Move(pathTo, movePath.Text + "\\" + Path.GetFileName(pathTo));
+                    }
+                }
+                this.Hide();
+                checkedListBox1.Items.Clear();
+                checkedListBox1.Visible = false;
+                checkBox2.Visible = false;
+                if (DH.Queue().Count > 0)
+                    HandleQueue();
+                else
+                    busy = false;
+            }
+        }
+     
     }
 }

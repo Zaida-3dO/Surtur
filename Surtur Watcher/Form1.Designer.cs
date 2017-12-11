@@ -26,10 +26,12 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.TypeName = new System.Windows.Forms.Label();
-            this.fileSystemWatcher1 = new System.IO.FileSystemWatcher();
+            
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.liveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.CPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lifeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.PendingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripSeparator();
@@ -44,9 +46,7 @@
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            ((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).BeginInit();
+           
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -58,13 +58,7 @@
             this.TypeName.Size = new System.Drawing.Size(56, 13);
             this.TypeName.TabIndex = 0;
             this.TypeName.Text = "Found File";
-            // 
-            // fileSystemWatcher1
-            // 
-            this.fileSystemWatcher1.EnableRaisingEvents = true;
-            this.fileSystemWatcher1.Path = "C:\\ProgramData\\surtur";
-            this.fileSystemWatcher1.SynchronizingObject = this;
-            this.fileSystemWatcher1.Renamed += new System.IO.RenamedEventHandler(this.FileSystemWatcher1_Renamed);
+           
             // 
             // notifyIcon1
             // 
@@ -80,20 +74,31 @@
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItem1,
             this.toolStripSeparator1,
-            this.liveToolStripMenuItem,
+            this.CPToolStripMenuItem,
             this.lifeToolStripMenuItem,
             this.PendingToolStripMenuItem,
             this.exitToolStripMenuItem,
             this.exitToolStripMenuItem1});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 126);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 148);
             // 
-            // liveToolStripMenuItem
+            // toolStripMenuItem1
             // 
-            this.liveToolStripMenuItem.Name = "liveToolStripMenuItem";
-            this.liveToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
-            this.liveToolStripMenuItem.Text = "Open Control Panel";
-            this.liveToolStripMenuItem.Click += new System.EventHandler(this.LiveToolStripMenuItem_Click);
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(178, 22);
+            this.toolStripMenuItem1.Text = "Scan";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
+            // 
+            // CPToolStripMenuItem
+            // 
+            this.CPToolStripMenuItem.Name = "CPToolStripMenuItem";
+            this.CPToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.CPToolStripMenuItem.Text = "Open Control Panel";
+            this.CPToolStripMenuItem.Click += new System.EventHandler(this.CPToolStripMenuItem_Click);
             // 
             // lifeToolStripMenuItem
             // 
@@ -216,17 +221,6 @@
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.CheckBox2_CheckedChanged);
             // 
-            // toolStripMenuItem1
-            // 
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(178, 22);
-            this.toolStripMenuItem1.Text = "Scan";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -247,7 +241,6 @@
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.fileSystemWatcher1)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -257,10 +250,9 @@
         #endregion
 
         private System.Windows.Forms.Label TypeName;
-        private System.IO.FileSystemWatcher fileSystemWatcher1;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem liveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem CPToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem lifeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem PendingToolStripMenuItem;
         private System.Windows.Forms.Button button1;

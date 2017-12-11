@@ -18,6 +18,7 @@ namespace Surtur_Core {
         public List<string> StorageButtons;
         public StorageInfo CurrentlyWatched;
         public List<string> QueueList;
+
         public string Destination;
         public void RemoveFromList(string toBeRemoved) {
 
@@ -41,6 +42,7 @@ namespace Surtur_Core {
         bool TriggerOnRename;
         Form SyncedPage;
         string SavePath;
+        string SaveDir;
         List<FileSystemWatcher> Dlist;
         /// <summary>
         /// Initializes a new instance of the <see cref="Watcher" /> class.
@@ -53,6 +55,26 @@ namespace Surtur_Core {
             this.SavePath = SavePath;
             Reload();
             busy = false;
+            SaveDir = Path.GetDirectoryName(SavePath);
+
+
+
+            FileSystemWatcher fileSystemWatcher1 = new FileSystemWatcher(SaveDir) {
+                EnableRaisingEvents = true,
+                SynchronizingObject = SyncedPage
+            };
+            fileSystemWatcher1.Changed += new FileSystemEventHandler(FileSystemWatcher1_CreatedDH);
+            fileSystemWatcher1.Created += new FileSystemEventHandler(FileSystemWatcher1_CreatedDH);
+                fileSystemWatcher1.Renamed += new RenamedEventHandler(this.FileSystemWatcher1_RenamedDH);
+        }
+        void FileSystemWatcher1_CreatedDH(object sender, FileSystemEventArgs e) {
+            if (e.FullPath.Equals(SavePath))
+                HandleFileChanges(e.Name, e.FullPath);
+        }
+        private void FileSystemWatcher1_RenamedDH(object sender, RenamedEventArgs e) {
+            if (e.FullPath.Equals(SavePath)) {
+                Reload();
+            }
         }
         /// <summary>
         /// Changes the working directory handler.
@@ -65,8 +87,8 @@ namespace Surtur_Core {
         }
         void Save() {
             try {
-                DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
-                DH.Save(@"C:\ProgramData\surtur\Sorter.srtr");
+                DH.Save(SavePath+".temp");
+                DH.Save(SavePath);
             } catch (Exception ex) {
                 //TODO logerror
             }
@@ -213,10 +235,10 @@ namespace Surtur_Core {
             }
         }
         void LogTransfers(string file, string from, string to) {
-            File.AppendAllText(@"C:\ProgramData\surtur\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
+            File.AppendAllText(SaveDir+"\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
         }
         void LogTransfers(string logText) {
-            File.AppendAllText(@"C:\ProgramData\surtur\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
+            File.AppendAllText(SaveDir+"\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
         }
     }
 }
