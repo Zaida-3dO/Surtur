@@ -15,7 +15,8 @@ namespace Surtur_Core {
         public DirectoryHandler DH;
         public string FoundFile;
         public string HandledType;
-        public List<StorageInfo> StorageButtons;
+        public List<string> StorageButtons;
+        public StorageInfo CurrentlyWatched;
         public List<string> QueueList;
         public string Destination;
         public void RemoveFromList(string toBeRemoved) {
@@ -25,6 +26,9 @@ namespace Surtur_Core {
 
         }
         public void AddToList(string toBeAdded,long delayInMs) {
+
+        }
+        public void NavigateTo(StorageInfo si) {
 
         }
         public void RemoveFromList(List<string> toBeRemoved) {
@@ -45,7 +49,7 @@ namespace Surtur_Core {
         /// <param name="SP">The page to synchronize with(Just pass in 'this' from the expected form).</param>
         public Watcher(string SavePath, Form SP) {
             SyncedPage = SP;
-            StorageButtons = new List<StorageInfo>();
+            StorageButtons = new List<string>();
             this.SavePath = SavePath;
             Reload();
             busy = false;
@@ -63,7 +67,7 @@ namespace Surtur_Core {
             try {
                 DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");
                 DH.Save(@"C:\ProgramData\surtur\Sorter.srtr");
-            } catch (Exception wx) {
+            } catch (Exception ex) {
                 //TODO logerror
             }
         }
@@ -128,77 +132,25 @@ namespace Surtur_Core {
                 busy = false;
         }
         void SI_Click(StorageInfo si) {
-            StorageButtons = new List<StorageInfo>();
-            Destination = si.DefaultPath;
+           StorageButtons = new List<string>();
+           Destination = si.DefaultPath;
            HandledType = si.Handlee;
-            if (si.Parent != null) {
-                Button btn4 = new Button {
-                    Text = "...",
-                    Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                    Height = 50,
-                    AutoSize = true
-                };
-                btn4.Click += new EventHandler((o, a) => {
-                    SI_Click(si.Parent);
-                });
-                flowLayoutPanel1.Controls.Add(btn4);
-            }
+
             if (si.NeedsPrompt)
                 foreach (string sub in si.AllHandledTypes) {
-                    Button btn = new Button {
-                        Text = sub,
-                        Height = 50,
-                        AutoSize = true
-                    };
-                    btn.Click += new EventHandler((o, a) => {
-                        SI_Click(si.GetHandle(sub));
-                    });
-                    flowLayoutPanel1.Controls.Add(btn);
+                    StorageButtons.Add(sub);
                 }
-            Button btn2 = new Button {
-                Text = "+",
-                Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
-                Height = 50,
-                AutoSize = true
-            };
-            btn2.Click += new EventHandler((o, a) => {
-                string newType = Interaction.InputBox("Enter a file Type to Add under " + si.Handlee, "Add Type", "");
-                string newPath = "";
-                if (!string.IsNullOrWhiteSpace(newType)) {
-                    FolderBrowserDialog fbd = new FolderBrowserDialog {
-                        Description = "Select Path to Save this type to",
-                        ShowNewFolderButton = true
-                    };
-                    if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
-                        fbd.SelectedPath = DH.RecentlySelectedPath;
-                    if (!(fbd.ShowDialog() == DialogResult.OK)) return;
-                    DH.RecentlySelectedPath = fbd.SelectedPath;
-                    newPath = fbd.SelectedPath;
-                }
-                if (!string.IsNullOrWhiteSpace(newPath)) {
-                    si.NeedsPrompt = true;
-                    si.SetHandler(newType, new StorageInfoBuilder()
-                                        .SetDefaultPath(newPath)
-                                        .NeedsPrompting(false)
-                                        .SetHandledName(newType)
-                                        .SetParent(si)
-                                        .Build());
-                    Button btn3 = new Button {
-                        Text = newType,
-                        Height = 50,
-                        AutoSize = true
-                    };
-                    btn3.Click += new EventHandler((od, ad) => {
-                        SI_Click(si.GetHandle(newType));
-                    });
-                    flowLayoutPanel1.Controls.Remove(btn2);
-                    flowLayoutPanel1.Controls.Add(btn3);
-                    flowLayoutPanel1.Controls.Add(btn2);
-
-                    Save();
-                }
-            });
-            flowLayoutPanel1.Controls.Add(btn2);
+           
+        }
+        public void AddSubType(string Type,string Path) {
+            CurrentlyWatched.NeedsPrompt = true;
+            CurrentlyWatched.SetHandler(Type, new StorageInfoBuilder()
+                                .SetDefaultPath(Path)
+                                .NeedsPrompting(false)
+                                .SetHandledName(Type)
+                                .SetParent(CurrentlyWatched)
+                                .Build());
+            Save();
         }
 
 

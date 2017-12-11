@@ -163,7 +163,83 @@ namespace Surtur_Watcher {
                 else
                     busy = false;
             }
-            
+        }
+        void UpdateQueue() {
+            //TODO clear check on load page
+            checkBox2.Visible = checkedListBox1.Visible = (surtur.QueueList.Count > 0);
+            checkedListBox1.Items.Clear();
+            //TODO persistent checks after add
+            if(surtur.QueueList.Count > 0) {
+                foreach(string item in surtur.QueueList) {
+                    checkedListBox1.Items.Add(item);
+                }
+            }
+        }
+        void RefreshView() {
+            flowLayoutPanel1.Controls.Clear();
+            ShowButtons();
+            TypeName.Text = surtur.FoundFile;
+            Type.Text = surtur.HandledType;
+            movePath.Text = surtur.Destination;
+            UpdateQueue();
+        }
+        void ShowButtons() {
+            if (surtur.CurrentlyWatched.Parent != null) {
+                Button btn = new Button {
+                    Text = "...",
+                    Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
+                    Height = 50,
+                    AutoSize = true
+                };
+                btn.Click += new EventHandler((o, a) => {
+                    surtur.NavigateTo(surtur.CurrentlyWatched.Parent);
+                    RefreshView();
+                });
+                flowLayoutPanel1.Controls.Add(btn);
+            }
+            foreach (string si in surtur.StorageButtons) {
+                flowLayoutPanel1.Controls.Add(GenerateButton(si));
+            }
+            Button btn2 = new Button {
+                Text = "+",
+                Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))),
+                Height = 50,
+                AutoSize = true
+            };
+            btn2.Click += new EventHandler((o, a) => {
+                string newType = Interaction.InputBox("Enter a file Type to Add under " + surtur.CurrentlyWatched.Handlee, "Add Type", "");
+                string newPath = "";
+                if (!string.IsNullOrWhiteSpace(newType)) {
+                    FolderBrowserDialog fbd = new FolderBrowserDialog {
+                        Description = "Select Path to Save this type to",
+                        ShowNewFolderButton = true
+                    };
+                    if (!string.IsNullOrWhiteSpace(surtur.DH.RecentlySelectedPath))
+                        fbd.SelectedPath = surtur.DH.RecentlySelectedPath;
+                    if (!(fbd.ShowDialog() == DialogResult.OK)) return;
+                    surtur.DH.RecentlySelectedPath = fbd.SelectedPath;
+                    newPath = fbd.SelectedPath;
+                }
+                if (!string.IsNullOrWhiteSpace(newPath)) {
+                    surtur.AddSubType(newType, newPath);
+
+                    flowLayoutPanel1.Controls.Remove(btn2);
+                    flowLayoutPanel1.Controls.Add(GenerateButton(newType));
+                    flowLayoutPanel1.Controls.Add(btn2);
+                }
+            });
+            flowLayoutPanel1.Controls.Add(btn2);
+        }
+        Button GenerateButton(string sub) {
+                Button btn = new Button {
+                    Text = sub,
+                    Height = 50,
+                    AutoSize = true
+                };
+                btn.Click += new EventHandler((o, a) => {
+                    surtur.NavigateTo(surtur.CurrentlyWatched.GetHandle(sub));
+                });
+            return btn;
         }
      
 
