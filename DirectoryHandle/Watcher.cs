@@ -20,30 +20,6 @@ namespace Surtur_Core {
         public List<string> QueueList;
 
         public string Destination;
-        public void RemoveFromList(string toBeRemoved) {
-
-        }
-        public void AddToList(string toBeAdded) {
-
-        }
-        public void AddToList(string toBeAdded,long delayInMs) {
-
-        }
-        public void NavigateTo(StorageInfo si) {
-
-        }
-        public void RemoveFromList(List<string> toBeRemoved) {
-
-        }
-        public void AddToList(List<string> toBeAdded) {
-
-        }
-        bool busy;
-        bool TriggerOnRename;
-        Form SyncedPage;
-        string SavePath;
-        string SaveDir;
-        List<FileSystemWatcher> Dlist;
         /// <summary>
         /// Initializes a new instance of the <see cref="Watcher" /> class.
         /// </summary>
@@ -65,8 +41,34 @@ namespace Surtur_Core {
             };
             fileSystemWatcher1.Changed += new FileSystemEventHandler(FileSystemWatcher1_CreatedDH);
             fileSystemWatcher1.Created += new FileSystemEventHandler(FileSystemWatcher1_CreatedDH);
-                fileSystemWatcher1.Renamed += new RenamedEventHandler(this.FileSystemWatcher1_RenamedDH);
+            fileSystemWatcher1.Renamed += new RenamedEventHandler(this.FileSystemWatcher1_RenamedDH);
         }
+
+        public void RemoveFromList(string toBeRemoved) {
+
+        }
+        public void AddToList(string toBeAdded) {
+
+        }
+        public void AddToList(string toBeAdded, long delayInMs) {
+
+        }
+        public void NavigateTo(StorageInfo si) {
+
+        }
+        public void RemoveFromList(List<string> toBeRemoved) {
+
+        }
+        public void AddToList(List<string> toBeAdded) {
+
+        }
+        bool busy;
+        bool TriggerOnRename;
+        Form SyncedPage;
+        string SavePath;
+        string SaveDir;
+        List<FileSystemWatcher> Dlist;
+
         void FileSystemWatcher1_CreatedDH(object sender, FileSystemEventArgs e) {
             if (e.FullPath.Equals(SavePath))
                 HandleFileChanges(e.Name, e.FullPath);
@@ -87,15 +89,15 @@ namespace Surtur_Core {
         }
         void Save() {
             try {
-                DH.Save(SavePath+".temp");
+                DH.Save(SavePath + ".temp");
                 DH.Save(SavePath);
             } catch (Exception ex) {
                 //TODO logerror
             }
         }
-        void Notification(string Title,String Text,ToolTipIcon img) {
-            notifyIcon1.ShowBalloonTip(1000,Title,Text,img);
-
+        void Notification(string Title, String Text, ToolTipIcon img) {
+            //  notifyIcon1.ShowBalloonTip(1000, Title, Text, img);
+            MessageBox.Show(Text, Title);
         }
         void HandleQueue() {
             string FullPath = DH.Pop();
@@ -103,7 +105,7 @@ namespace Surtur_Core {
             string Type = Path.GetExtension(Name);
             if (Type.StartsWith("."))
                 Type = Type.Substring(1);
-            if (DH.AllHandledTypes.Contains(Type)){
+            if (DH.AllHandledTypes.Contains(Type)) {
                 if (DH.GetHandle(Type).NeedsPrompt) {
                     SyncedPage.Show();
                     SyncedPage.BringToFront();
@@ -142,7 +144,7 @@ namespace Surtur_Core {
                                             .SetHandledName(Type)
                                             .SetParent(null)
                                             .Build());
-                    Notification( "Moving " + Type, "To change, Click here, Files of type " + Type + " will now be moved to " + fbd.SelectedPath, ToolTipIcon.Info);
+                    Notification("Moving " + Type, "To change, Click here, Files of type " + Type + " will now be moved to " + fbd.SelectedPath, ToolTipIcon.Info);
                     DH.Push(FullPath);
                     HandleQueue();
                 }
@@ -154,17 +156,17 @@ namespace Surtur_Core {
                 busy = false;
         }
         void SI_Click(StorageInfo si) {
-           StorageButtons = new List<string>();
-           Destination = si.DefaultPath;
-           HandledType = si.Handlee;
+            StorageButtons = new List<string>();
+            Destination = si.DefaultPath;
+            HandledType = si.Handlee;
 
             if (si.NeedsPrompt)
                 foreach (string sub in si.AllHandledTypes) {
                     StorageButtons.Add(sub);
                 }
-           
+          
         }
-        public void AddSubType(string Type,string Path) {
+        public void AddSubType(string Type, string Path) {
             CurrentlyWatched.NeedsPrompt = true;
             CurrentlyWatched.SetHandler(Type, new StorageInfoBuilder()
                                 .SetDefaultPath(Path)
@@ -194,7 +196,7 @@ namespace Surtur_Core {
                 DH = DirectoryHandler.Load(SavePath);
             } catch {
                 try {
-                    DH = DirectoryHandler.Load(SavePath+".temp");
+                    DH = DirectoryHandler.Load(SavePath + ".temp");
                 } catch {
                     DH = new DirectoryHandler();
                 }
@@ -204,11 +206,11 @@ namespace Surtur_Core {
 
         }
         void FileSystemWatcher1_Created(object sender, FileSystemEventArgs e) {
-            HandleFileChanges(e.Name,e.FullPath);
+            HandleFileChanges(e.Name, e.FullPath);
         }
-        void FileSystemWatcher1_Renamed(object sender,RenamedEventArgs e) {
-            if(TriggerOnRename)
-                HandleFileChanges(e.Name,e.FullPath);
+        void FileSystemWatcher1_Renamed(object sender, RenamedEventArgs e) {
+            if (TriggerOnRename)
+                HandleFileChanges(e.Name, e.FullPath);
         }
         void HandleFileChanges(string Name, string FullPath) {
             //TODO if(folder) break;
@@ -235,10 +237,32 @@ namespace Surtur_Core {
             }
         }
         void LogTransfers(string file, string from, string to) {
-            File.AppendAllText(SaveDir+"\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
+            File.AppendAllText(SaveDir + "\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
         }
         void LogTransfers(string logText) {
-            File.AppendAllText(SaveDir+"\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
+            File.AppendAllText(SaveDir + "\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
+        }
+
+        public void IgnorePath() {
+            DH.AddIgnorePath(FoundFile);
+            LogTransfers(FoundFile + " added to ignore List");
+            if (DH.Queue().Count > 0)
+                HandleQueue();
+            else
+                busy = false;
+        }
+        public void MoveFile() {
+            LogTransfers(Path.GetFileName(FoundFile), FoundFile, Destination);
+            File.Move(FoundFile, Destination + "\\" + Path.GetFileName(FoundFile));
+
+            if (DH.Queue().Count > 0)
+                HandleQueue();
+            else
+                busy = false;
+        }
+        public void MoveFile(string FileToMove) {
+            LogTransfers(Path.GetFileName(FileToMove), FileToMove,Destination);
+            File.Move(FileToMove, Destination + "\\" + Path.GetFileName(FileToMove));
         }
     }
 }

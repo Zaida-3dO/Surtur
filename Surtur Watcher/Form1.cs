@@ -144,38 +144,30 @@ namespace Surtur_Watcher {
         private void Button1_Click(object sender, EventArgs e) {
             if (checkBox1.Checked) {
                 if (MessageBox.Show("You, clicked ignore,Are you Sure you want to Leave this file unsorted, you can always change later in the Menu", "Confirm Ignore", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                    DH.AddIgnorePath(FoundFile);
-                    LogTransfers(FoundFile + " added to ignore List");
+                    surtur.IgnorePath();
                     this.Hide();
                     checkedListBox1.Items.Clear();
                     checkedListBox1.Visible = false;
                     checkBox2.Visible = false;
-                    if (DH.Queue().Count > 0)
-                        HandleQueue();
-                    else
-                        busy = false;
                 }
                 return;
             }
-            if (MessageBox.Show("Are you sure you want to Move "+ FoundFile+((checkedListBox1.CheckedItems.Count>0)?"and "+ checkedListBox1.CheckedItems.Count+" more":"")+" to "+movePath.Text, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                LogTransfers(Path.GetFileName(FoundFile), FoundFile, movePath.Text);
-                File.Move(FoundFile, movePath.Text+"\\"+Path.GetFileName(FoundFile));
-                if(checkedListBox1.CheckedItems.Count > 0) {
+            if (MessageBox.Show("Are you sure you want to Move " + surtur.FoundFile + ((checkedListBox1.CheckedItems.Count > 0) ? "and " + checkedListBox1.CheckedItems.Count + " more" : "") + " to " + surtur.Destination, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                if (checkedListBox1.CheckedItems.Count > 0) {
                     foreach (string pathTo in checkedListBox1.CheckedItems) {
-                        LogTransfers(Path.GetFileName(pathTo), pathTo, movePath.Text);
-                        File.Move(pathTo, movePath.Text + "\\" + Path.GetFileName(pathTo));
+                        surtur.MoveFile(pathTo);
+                       
                     }
                 }
+
+
                 this.Hide();
                 checkedListBox1.Items.Clear();
                 checkedListBox1.Visible = false;
                 checkBox2.Visible = false;
-                if (DH.Queue().Count > 0)
-                    HandleQueue();
-                else
-                    busy = false;
+               
             }
         }
-     
+
     }
 }
