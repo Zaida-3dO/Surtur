@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,14 +14,14 @@ namespace Surtur_Core {
         HashSet<string> _ignoredType;
         public string RecentlySelectedPath { get { return _recentPath; }set { if (Directory.Exists(value))_recentPath = value;  } }
         string _recentPath;
-        HashSet<string> _Queue;
+        ConcurrentQueue<string> _Queue;
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectoryHandler"/> class.
         /// </summary>
-        public DirectoryHandler() {
+        public DirectoryHandler(){
             _dirHandler = new Dictionary<string, StorageInfo>();
             RecentlySelectedPath = "";
-            _Queue = new HashSet<string>();
+            _Queue = new ConcurrentQueue<string>();
             _watchPath = new HashSet<string>();
             _ignoredPath = new HashSet<string>();
             _ignoredType = new HashSet<string>();
@@ -30,23 +31,23 @@ namespace Surtur_Core {
         /// </summary>
         /// <param name="enque">The item to enque.</param>
         public void Push(string enque) {
-            _Queue.Add(enque);
+            if(!_Queue.Contains(enque))
+                _Queue.Enqueue(enque);
         }
         /// <summary>
         /// Pops the path at the top of the Queue.
         /// </summary>
         /// <returns>The Path first in the Queue</returns>
         public string Pop() {
-            string ans = _Queue.First();
-            _Queue.Remove(_Queue.First());
+            _Queue.TryDequeue( out string ans);
             return ans;
         }
         /// <summary>
         /// A Queue of all items waiting to be handled
         /// </summary>
         /// <returns>A list of all paths in the queue</returns>
-        public List<string> Queue() {
-            return _Queue.ToList();
+        public List<string> Queue {
+           get { return _Queue.ToList(); }
         }
         /// <summary>
         /// Handles the specified type.
@@ -54,6 +55,8 @@ namespace Surtur_Core {
         /// <param name="Type">The type.</param>
         /// <param name="SI">The storage detai;ls.</param>
         public void SetHandler(string Type,StorageInfo SI) {
+            if (Type.StartsWith("."))
+                Type = Type.Substring(1);
             if (_dirHandler.ContainsKey(Type)) 
                 _dirHandler[Type].DefaultPath = SI.DefaultPath;
             else
@@ -160,6 +163,7 @@ namespace Surtur_Core {
         /// or
         /// An error Occured, Could not save DH</exception>
         public void Save(string path) {
+            (new FileInfo(path)).Directory.Create();
             try {
                 using (FileStream fsout = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None)) {
                     new BinaryFormatter().Serialize(fsout, this);

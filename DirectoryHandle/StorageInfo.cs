@@ -67,6 +67,8 @@ namespace Surtur_Core {
             if (!children.ContainsKey(Type))
                 throw new NotSupportedException(Type + " is not handled");
             children.Remove(Type);
+            if (children.Count == 0)
+                NeedsPrompt = false;
         }
         /// <summary>
         /// returns All the handled types.

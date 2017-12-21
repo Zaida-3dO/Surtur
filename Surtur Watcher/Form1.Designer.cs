@@ -26,7 +26,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.TypeName = new System.Windows.Forms.Label();
-            
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -46,7 +45,6 @@
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
-           
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -58,7 +56,6 @@
             this.TypeName.Size = new System.Drawing.Size(56, 13);
             this.TypeName.TabIndex = 0;
             this.TypeName.Text = "Found File";
-           
             // 
             // notifyIcon1
             // 
@@ -80,7 +77,7 @@
             this.exitToolStripMenuItem,
             this.exitToolStripMenuItem1});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 148);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 126);
             // 
             // toolStripMenuItem1
             // 

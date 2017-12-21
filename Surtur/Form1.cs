@@ -161,6 +161,7 @@ namespace Surtur {
             }
             DefaultPath.Text = si.DefaultPath;
             TypeName.Text = si.Handlee;
+            
         }
         void Save() {
             DH.Save(@"C:\ProgramData\surtur\Sorter.srtr.temp");

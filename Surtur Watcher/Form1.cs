@@ -8,47 +8,61 @@ using Surtur;
 
 namespace Surtur_Watcher {
  
-    public partial class Form1 : Form {
-        Watcher surtur;
-
-
+    public partial class Form1 : Form, ISurtur {
         public Form1() {
             InitializeComponent();
             surtur = new Watcher(@"C:\ProgramData\surtur\Sorter.srtr", this);
         }
-
         private void Form1_Load(object sender, EventArgs e) {
             this.Hide();
             ShowInTaskbar = false;
             notifyIcon1.Visible = true;
-
             notifyIcon1.BalloonTipText = "Surtur is Now active and will help sort your files automatically.";
             notifyIcon1.BalloonTipTitle = "Surtur(File Sorter)";
             notifyIcon1.ShowBalloonTip(1000);
         }
 
-   
 
-        void UpdateQueue() {
+        #region  Implementing ISurtur
+        Watcher surtur;
+        public Form Form { get { return this; } }
+        public void Notification(string Title, String Text, ToolTipIcon img) {
+              notifyIcon1.ShowBalloonTip(1000, Title, Text, img);
+        }
+       public void ShowSelectPath() {
+            BringToFront();
+            ShowInTaskbar = true;
+        }
+        public void HideSelectPath() {
+            ShowInTaskbar = false;
+        }
+        public void UpdateQueue(List<string> QueueList) {
             //TODO clear check on load page
-            checkBox2.Visible = checkedListBox1.Visible = (surtur.QueueList.Count > 0);
+            checkBox2.Visible = checkedListBox1.Visible = (QueueList.Count > 0);
             checkedListBox1.Items.Clear();
             //TODO persistent checks after add
-            if (surtur.QueueList.Count > 0) {
-                foreach (string item in surtur.QueueList) {
-                    checkedListBox1.Items.Add(item);
+            if (QueueList.Count > 0) {
+                foreach (string item in QueueList) {
+                    string FileType = Path.GetExtension(item).Substring(1);
+                    if (FileType.StartsWith("."))
+                        FileType = FileType.Substring(1);
+                    if (FileType.Equals(surtur.Format))
+                        checkedListBox1.Items.Add(Path.GetFileName(item));                    PendingToolStripMenuItem.
                 }
             }
         }
-        void RefreshView() {
-            flowLayoutPanel1.Controls.Clear();
-            ShowButtons();
-            TypeName.Text = surtur.FoundFile;
-            Type.Text = surtur.HandledType;
-            movePath.Text = surtur.Destination;
-            UpdateQueue();
+        public string FilePath {
+            set { TypeName.Text = value; }
         }
-        void ShowButtons() {
+        public string FileType {
+            set { Type.Text = value; }
+        }
+        public string FileDestination {
+            set { movePath.Text = value; }
+            
+        }
+        public void RefreshView() {
+            flowLayoutPanel1.Controls.Clear();
             if (surtur.CurrentlyWatched.Parent != null) {
                 Button btn = new Button {
                     Text = "...",
@@ -106,6 +120,7 @@ namespace Surtur_Watcher {
             });
             return btn;
         }
+#endregion
 
 
         private void CheckBox2_CheckedChanged(object sender, EventArgs e) {
@@ -119,55 +134,53 @@ namespace Surtur_Watcher {
                     checkedListBox1.SetItemChecked(i, false);
             }
         }
-
-
         void NotifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e) {
             CPToolStripMenuItem_Click(sender, e);
         }
-
-
         private void CPToolStripMenuItem_Click(object sender, EventArgs e) {
             AddScanDir CP = new AddScanDir(surtur.DH);
             CP.Show();
             this.Hide();
         }
-
-       
-
         private void ExitToolStripMenuItem1_Click(object sender, EventArgs e) {
             if (MessageBox.Show("Are you Sure you want to close surtur", "Confirm Close", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
                 this.Close();
             }
-
         }
 
         private void Button1_Click(object sender, EventArgs e) {
             if (checkBox1.Checked) {
                 if (MessageBox.Show("You, clicked ignore,Are you Sure you want to Leave this file unsorted, you can always change later in the Menu", "Confirm Ignore", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                    HideForm();
                     surtur.IgnorePath();
-                    this.Hide();
-                    checkedListBox1.Items.Clear();
-                    checkedListBox1.Visible = false;
-                    checkBox2.Visible = false;
+                    //recalls Handle on multiple ignore
+                    //TODO Ignore multiple
                 }
                 return;
             }
             if (MessageBox.Show("Are you sure you want to Move " + surtur.FoundFile + ((checkedListBox1.CheckedItems.Count > 0) ? "and " + checkedListBox1.CheckedItems.Count + " more" : "") + " to " + surtur.Destination, "Confirm Move", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
-                if (checkedListBox1.CheckedItems.Count > 0) {
-                    foreach (string pathTo in checkedListBox1.CheckedItems) {
+                CheckedListBox.CheckedItemCollection a = checkedListBox1.CheckedItems;
+                List<string> power = new List<string>();
+                foreach(string path in a) {
+                    power.Add(path);
+                }
+                HideForm();
+                surtur.MoveFile();
+                if (power.Count > 0) {
+                    foreach (string pathTo in power) {
                         surtur.MoveFile(pathTo);
-                       
                     }
                 }
-
-
-                this.Hide();
-                checkedListBox1.Items.Clear();
-                checkedListBox1.Visible = false;
-                checkBox2.Visible = false;
-               
             }
+            if (!surtur.IsBusy)
+                HideForm();
         }
-
+        void HideForm() {
+            this.Hide();
+            checkedListBox1.Items.Clear();
+            checkedListBox1.Visible = false;
+            checkBox2.Visible = false;
+        }
     }
+    
 }
