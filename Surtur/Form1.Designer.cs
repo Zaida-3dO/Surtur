@@ -14,6 +14,7 @@
                 components.Dispose();
             }
             base.Dispose(disposing);
+            //TODO handlequeue. first ensure, can't handle queue will CP is open
         }
 
         #region Windows Form Designer generated code

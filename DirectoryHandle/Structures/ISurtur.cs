@@ -9,6 +9,7 @@ namespace Surtur_Core {
         void ShowSelectPath();
         void HideSelectPath();
         void Notification(string Title, string Text, ToolTipIcon img);
+        void TransferNotification(string From, string To, bool Successfull);
         void RefreshView();
         string FilePath {
             set;

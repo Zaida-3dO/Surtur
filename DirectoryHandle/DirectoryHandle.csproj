@@ -43,7 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DirectoryHandler.cs" />
-    <Compile Include="ISurtur.cs" />
+    <Compile Include="Structures\DHQueueItem.cs" />
+    <Compile Include="Structures\ISurtur.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StorageInfo.cs" />
     <Compile Include="Watcher.cs" />

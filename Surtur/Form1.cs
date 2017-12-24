@@ -241,18 +241,14 @@ namespace Surtur {
 
         private void Button7_Click(object sender, EventArgs e) {
             //Add watch Path
-            FolderBrowserDialog fbd = new FolderBrowserDialog {
-                Description = "Add a path to be Ignored",
-                ShowNewFolderButton = false
-            };
-            if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
-                fbd.SelectedPath = DH.RecentlySelectedPath;
+            OpenFileDialog fbd = new OpenFileDialog();
             if(!(fbd.ShowDialog()==DialogResult.OK))return;
-            DH.RecentlySelectedPath = fbd.SelectedPath;
-            if (string.IsNullOrWhiteSpace(fbd.SelectedPath)||DH.AllIgnoredPaths.Contains(fbd.SelectedPath))
+            string SelectedPath = fbd.FileName;
+            DH.RecentlySelectedPath = Path.GetDirectoryName(SelectedPath);
+            if (string.IsNullOrWhiteSpace(SelectedPath)||DH.AllIgnoredPaths.Contains(SelectedPath))
                 return;
-            DH.AddIgnorePath(fbd.SelectedPath);
-            listBox2.Items.Add(fbd.SelectedPath);
+            DH.AddIgnorePath(SelectedPath);
+            listBox2.Items.Add(SelectedPath);
             Save();
         }
 

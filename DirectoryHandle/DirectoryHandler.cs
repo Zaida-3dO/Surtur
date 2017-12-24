@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Surtur_Core.Queue;
 using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Surtur_Core {
@@ -14,14 +15,14 @@ namespace Surtur_Core {
         HashSet<string> _ignoredType;
         public string RecentlySelectedPath { get { return _recentPath; }set { if (Directory.Exists(value))_recentPath = value;  } }
         string _recentPath;
-        ConcurrentQueue<string> _Queue;
+        ConcurrentQueue<QueueItem> _Queue;
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectoryHandler"/> class.
         /// </summary>
         public DirectoryHandler(){
             _dirHandler = new Dictionary<string, StorageInfo>();
             RecentlySelectedPath = "";
-            _Queue = new ConcurrentQueue<string>();
+            _Queue = new ConcurrentQueue<QueueItem>();
             _watchPath = new HashSet<string>();
             _ignoredPath = new HashSet<string>();
             _ignoredType = new HashSet<string>();
@@ -31,23 +32,64 @@ namespace Surtur_Core {
         /// </summary>
         /// <param name="enque">The item to enque.</param>
         public void Push(string enque) {
-            if(!_Queue.Contains(enque))
-                _Queue.Enqueue(enque);
+            QueueItem newItem = new QueueItem(enque);
+            if (!_Queue.Contains(newItem))
+                _Queue.Enqueue(newItem);
+            else { }
         }
         /// <summary>
         /// Pops the path at the top of the Queue.
         /// </summary>
         /// <returns>The Path first in the Queue</returns>
-        public string Pop() {
-            _Queue.TryDequeue( out string ans);
+        public QueueItem Pop() {
+            _Queue.TryDequeue( out QueueItem ans);
+            CheckTop();
             return ans;
+        }
+        public QueueItem Peek() {
+            _Queue.TryPeek(out QueueItem ans);
+            return ans;
+        }
+        /// <summary>
+        /// Removes the specified item from the queue.
+        /// </summary>
+        /// <param name="pop">The item to pop.</param>
+        public void RemoveFromQueue(string pop) {
+            QueueItem temp = new QueueItem(pop);
+            if (_Queue.Contains(temp)) {
+                foreach (QueueItem qi in _Queue) {
+                    if (qi.Equals(temp)) {
+                        qi.Remove();
+                    }
+                }
+            }
+            CheckTop();
         }
         /// <summary>
         /// A Queue of all items waiting to be handled
         /// </summary>
         /// <returns>A list of all paths in the queue</returns>
         public List<string> Queue {
-           get { return _Queue.ToList(); }
+           get { List<string> ret = new List<string>();
+                foreach (QueueItem qi in _Queue) {
+                    if (!qi.IsRemoved) {
+                        ret.Add(qi.Name);
+                    }
+                }
+                return ret;
+            }
+        }
+        /// <summary>
+        /// Checks the top and pops if it has been removed.
+        /// </summary>
+        void CheckTop() {
+            if (_Queue.Count > 0) {
+                _Queue.TryPeek(out QueueItem qi);
+                if (qi.IsRemoved) {
+                    _Queue.TryDequeue(out QueueItem e);
+                    CheckTop();
+                }
+            }
         }
         /// <summary>
         /// Handles the specified type.
@@ -57,6 +99,7 @@ namespace Surtur_Core {
         public void SetHandler(string Type,StorageInfo SI) {
             if (Type.StartsWith("."))
                 Type = Type.Substring(1);
+            Type = Type.ToLower();
             if (_dirHandler.ContainsKey(Type)) 
                 _dirHandler[Type].DefaultPath = SI.DefaultPath;
             else
