@@ -30,7 +30,7 @@ namespace Surtur_Core {
         bool busy;
         //TODO v2 comments evrywhere, in app and in code
         public bool TriggerOnRename;
-        ISurtur SyncedPage;
+        public ISurtur SyncedPage;
         Form SyncedPageForm;
         string SavePath;
         string SaveDir;
@@ -118,7 +118,8 @@ namespace Surtur_Core {
         void Save() {
             try {
                 DH.Save(SavePath + ".temp");
-                DH.Save(SavePath);
+                File.Delete(SavePath);
+                File.Move(SavePath + ".temp",SavePath);
             } catch  {
                 LogTransfers("Error Saving to " + SavePath);
             }
@@ -160,6 +161,14 @@ namespace Surtur_Core {
         void HandleQueue() {
             string FullPath =Peek();
             string Type = CleanUpType(Path.GetExtension(FullPath));
+            if (DH.AllIgnoredTypes.Contains(Type)) {
+                DH.RemoveFromQueue(FullPath);
+
+                if (DH.Queue.Count > 0)
+                    HandleQueue();
+                else
+                    busy = false;
+            }
             Format = Type;
             FoundFile = FullPath;
             SyncedPage.UpdateQueue(DH.Queue);
@@ -175,34 +184,41 @@ namespace Surtur_Core {
                     MoveFile(FullPath, DH.GetHandle(Type).DefaultPath);
                 }
             } else {
-                FolderBrowserDialog fbd = new FolderBrowserDialog {
-                    Description = Type + " Sort. Organize your Folders, where would you like to store ." + Type + " files. (To ignore these files, or change your settings Open Surtur by clicking the icon in your Tray.)",
-                    ShowNewFolderButton = true
-                };
-                if (!string.IsNullOrWhiteSpace(DH.RecentlySelectedPath))
-                    fbd.SelectedPath = DH.RecentlySelectedPath;
-
-               SyncedPage.ShowSelectPath();
-                if ((fbd.ShowDialog() == DialogResult.OK)) {
-            //        SyncedPage.HideSelectPath();
-                    DH.RecentlySelectedPath = fbd.SelectedPath;
-                    DH.SetHandler(Type, new StorageInfoBuilder()
-                                            .SetDefaultPath(fbd.SelectedPath)
+                Tuple<bool, string, Dictionary<string, string>> newSI = SyncedPage.ShowSelectPath(Type);
+                if ((newSI.Item1)) {
+                    SyncedPage.HideSelectPath();
+                    DH.RecentlySelectedPath = newSI.Item2;
+                    StorageInfo si = new StorageInfoBuilder()
+                                            .SetDefaultPath(newSI.Item2)
                                             .NeedsPrompting(false)
                                             .SetHandledName(Type)
                                             .SetParent(null)
-                                            .Build());
-                    SyncedPage.Notification("Moving " + Type, "To change, Click here, Files of type " + Type + " will now be moved to " + fbd.SelectedPath, ToolTipIcon.Info);
+                                            .Build();
+                    DH.SetHandler(Type, si);
+                    if (newSI.Item3.Count > 0) {
+                        Dictionary<string, string> children = newSI.Item3;
+                        si.NeedsPrompt = true;
+                        foreach (string subtype in children.Keys) {
+                            si.SetHandler(subtype, new StorageInfoBuilder()
+                                                .SetDefaultPath(children[subtype])
+                                                .NeedsPrompting(false)
+                                                .SetHandledName(subtype)
+                                                .SetParent(si)
+                                                .Build());
+                        }
+                    }
+                    SyncedPage.Notification("Moving " + Type, "To change, Click here, Files of type " + Type + " will now be moved to " + newSI.Item2, ToolTipIcon.Info);
                   
-                    HandleQueue();
+                    //HandleQueue();
                 } else {
+                    SyncedPage.HideSelectPath();
                     if (MessageBox.Show("Do you want to ignore future "+Type+" Files", "Ignore "+Type+"?", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
                         DH.AddIgnoreType(Type);
                     } else {
-                        //TODO v2 add to unsorted
+                        //TODO v2 add to unsorted (menu stuffs)
                     }
                 }
-
+                Save();
                 DH.RemoveFromQueue(FullPath);
                 
                 if (DH.Queue.Count > 0)
@@ -270,9 +286,6 @@ namespace Surtur_Core {
 
             Save();
         }
-
-
-
         void Init_Watchers() {
             Dlist = new List<FileSystemWatcher>();
             foreach (string path in DH.AllWatchedPaths) {
@@ -300,7 +313,7 @@ namespace Surtur_Core {
            
         }
         void FileSystemWatcher1_Created(object sender, FileSystemEventArgs e) {
-         //    SyncedPageForm.Show();
+          //    SyncedPageForm.Show();
          //   Push(e.FullPath);
             HandleFileChanges(e.FullPath);
         }
@@ -322,12 +335,14 @@ namespace Surtur_Core {
                 LogTransfers("Ignored " + Name + " due to file type");
                 return;
             }
+            if (File.Exists(FullPath)) {
                 Push(FullPath);
-            lock (this) {
-                if (!busy) {
-                    busy = true;
-                    //If not busy?
-                    HandleQueue();
+                lock (this) {
+                    if (!busy) {
+                        busy = true;
+                        //If not busy?
+                        HandleQueue();
+                    }
                 }
             }
             
@@ -350,11 +365,13 @@ namespace Surtur_Core {
                 all.Add(FullPath);
             }
             Push(all);
-            lock (this) {
-                if (!busy) {
-                    busy = true;
-                    //If not busy?
-                    HandleQueue();
+            if (DH.Queue.Count > 0) {
+                lock (this) {
+                    if (!busy) {
+                        busy = true;
+                        //If not busy?
+                        HandleQueue();
+                    }
                 }
             }
         }
@@ -365,7 +382,7 @@ namespace Surtur_Core {
                 File.AppendAllText(SaveDir + "\\Transfers.log2", "[" + DateTime.Now.ToString() + "]" + " Succesfully moved " + file + " from " + from + " to " + to + "\r\n");
             }
         }
-        void LogTransfers(string logText) {
+        public void LogTransfers(string logText) {
             try {
                 File.AppendAllText(SaveDir + "\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + " " + logText + "\r\n");
             } catch {
@@ -415,14 +432,45 @@ namespace Surtur_Core {
                 DH.RemoveFromQueue(FileToMove);
                 SyncedPage.TransferNotification(Path.GetFileName(FileToMove), " Destination is same as source", true);
                 LogTransfers("Didn't Move " + Path.GetFileName(FileToMove) + " Destination is same as source");
+                Save();
             } else {
                 try {
                     int dup = 0;
                     DH.RemoveFromQueue(FileToMove);
+                   
                     if (File.Exists(Destination + "\\" + Path.GetFileName(FileToMove))) {
-                        dup++;
-                        while (File.Exists(Destination + "\\" + Path.GetFileNameWithoutExtension(FileToMove) + ((dup > 0) ? "(" + dup + ")" : "") + Path.GetExtension(FileToMove))) {
+                        long moveFilelength = new FileInfo(FileToMove).Length;
+                        long existFilelength = new FileInfo(Destination + "\\" + Path.GetFileName(FileToMove)).Length;
+                        if (existFilelength == moveFilelength) {
+                            File.Delete(FoundFile);
+                            SyncedPage.TransferNotification(Path.GetFileName(FileToMove), " File already exist in desitination", true);
+                            LogTransfers("Files merged " + Path.GetFileName(FileToMove) + " File already exist in desitination");
+                            Save();
+                            if (Continue)
+                                if (DH.Queue.Count > 0)
+                                    HandleQueue();
+                                else
+                                    busy = false;
+                            return;
+                        } else {
                             dup++;
+                            while (File.Exists(Destination + "\\" + Path.GetFileNameWithoutExtension(FileToMove) + ((dup > 0) ? "(" + dup + ")" : "") + Path.GetExtension(FileToMove))) {
+                                existFilelength = new FileInfo(Destination + "\\" + Path.GetFileNameWithoutExtension(FileToMove) + ((dup > 0) ? "(" + dup + ")" : "") + Path.GetExtension(FileToMove)).Length;
+                                if (existFilelength == moveFilelength) {
+                                    File.Delete(FoundFile);
+                                    SyncedPage.TransferNotification(Path.GetFileName(FileToMove), " File already exist in desitination", true);
+                                    LogTransfers("Files merged " + Path.GetFileName(FileToMove) + " File already exist in desitination");
+                                    Save();
+                                    if (Continue)
+                                        if (DH.Queue.Count > 0)
+                                            HandleQueue();
+                                        else
+                                            busy = false;
+                                    return;
+                                } else {
+                                    dup++;
+                                }
+                            }
                         }
                     }
                     string DestinationName = Path.GetFileNameWithoutExtension(FileToMove) + ((dup > 0) ? "(" + dup + ")" : "") + Path.GetExtension(FileToMove);

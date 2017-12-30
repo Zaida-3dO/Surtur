@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace Surtur_Core {
@@ -6,7 +7,7 @@ namespace Surtur_Core {
         Form Form {
             get;
         }
-        void ShowSelectPath();
+        Tuple<bool, string, Dictionary<string, string>> ShowSelectPath(string newType);
         void HideSelectPath();
         void Notification(string Title, string Text, ToolTipIcon img);
         void TransferNotification(string From, string To, bool Successfull);

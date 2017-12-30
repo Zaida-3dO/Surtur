@@ -19,17 +19,18 @@ namespace Surtur_Watcher {
             //TODO v2 Start new Form?
             }
         static void Main2() {
-            try {
-                Application.Run(new Form1());
-            } catch (Exception ex) {
-                File.AppendAllText(@"C:\ProgramData\surtur" + "\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + "Fatal Error " + ex.Message + " ... Restarting  \r\n");
-                if (CrashCount++ < 5) {
-                    Main2();
-                } else {
-                    MessageBox.Show("The App has encountered an error and needs to close", "Surtur Fatal error", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1);
-                }
+            Application.Run(new Form1());
+            //try {
+            //    Application.Run(new Form1());
+            //} catch (Exception ex) {
+            //    File.AppendAllText(@"C:\ProgramData\surtur" + "\\Transfers.log", "[" + DateTime.Now.ToString() + "]" + "Fatal Error " + ex.Message + " ... Restarting  \r\n");
+            //    if (CrashCount++ < 5) {
+            //        Main2();
+            //    } else {
+            //        MessageBox.Show("The App has encountered an error and needs to close", "Surtur Fatal error", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1);
+            //    }
 
-            }
+            //}
         }
             public static void ResetCrashCount() {
             CrashCount = 0;

@@ -6,6 +6,7 @@ using Surtur_Core;
 using System.IO;
 using Surtur;
 using System.Media;
+using DesktopBlackgroundUAC;
 namespace Surtur_Watcher {
  
     public partial class Form1 : Form, ISurtur {
@@ -17,6 +18,13 @@ namespace Surtur_Watcher {
             transfers = new List<Tuple<string, string, bool>>();
             surtur.StartQueue();
         }
+        public Form1(string WatcherPath) {
+            InitializeComponent();
+            surtur = new Watcher(WatcherPath, this);
+            transfers = new List<Tuple<string, string, bool>>();
+            this.Show();
+            surtur.StartQueue();
+        }
         private void Form1_Load(object sender, EventArgs e) {
             this.Hide();
             ShowInTaskbar = false;
@@ -26,7 +34,7 @@ namespace Surtur_Watcher {
 
 
         #region  Implementing ISurtur
-        Watcher surtur;
+        public Watcher surtur;
         public Form Form { get { return this; } }
         public void Notification(string Title, string Text, ToolTipIcon img) {
               notifyIcon1.ShowBalloonTip(1000, Title, Text, img);
@@ -58,12 +66,49 @@ namespace Surtur_Watcher {
         public void ShowTransferNotifications(int pass, int fail) {
             notifyIcon1.ShowBalloonTip(1000, "Auto-Moved " + (pass + fail) + " Files", pass + " Moved Successfully, and " + fail + " Failed. Click here for more details",ToolTipIcon.Info);
         }
-            public void ShowSelectPath() {
-            BringToFront();
+        BlackgroundForm a;
+        public Tuple<bool, string, Dictionary<string, string>> ShowSelectPath(string newType) {
+            //TODO merge newtype with already existing type
+
+            bool accepted=false;
+            string path="";
+            Dictionary<string,string> Children= new Dictionary<string, string>();
+            FolderBrowserDialog fbd = new FolderBrowserDialog {
+                Description = newType + " Sort. Organize your Folders, where would you like to store ." + newType + " files. (To change your settings Open Surtur by clicking the icon in your Tray.)",
+                ShowNewFolderButton = true
+            };
+            if (!string.IsNullOrWhiteSpace(surtur.DH.RecentlySelectedPath))
+                fbd.SelectedPath = surtur.DH.RecentlySelectedPath;
+            a = new BlackgroundForm();
+            a.Show();
+            //  BringToFront();
             SystemSounds.Hand.Play();
-          //  ShowInTaskbar = true;
+            if ((fbd.ShowDialog(a) == DialogResult.OK)) {
+                surtur.DH.RecentlySelectedPath = fbd.SelectedPath;
+                accepted = true;
+                path = fbd.SelectedPath;
+               if( MessageBox.Show(a,"Is there is any ambiguity in "+newType+" files. For example, mp4 files could be put in different folders if Movies or shows, would you like to add Sub-Types?","Add sub-type?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                    bool cont = true;
+                    while (cont) {
+                        BringToFront();
+                        a.Hide();
+                        string ans=Interaction.InputBox("Enter a file subType to Ignore", "Ignore Type");
+                        a.Show();
+                        if (!string.IsNullOrWhiteSpace(ans)){
+                            fbd.Description = ans + " Sort. Organize your Folders, where would you like to store " + ans + " files. (To change your settings Open Surtur by clicking the icon in your Tray.)";
+                            if ((fbd.ShowDialog(a) == DialogResult.OK)) {
+                                surtur.DH.RecentlySelectedPath = fbd.SelectedPath;
+                                Children.Add(ans, fbd.SelectedPath);
+                            }
+                        }
+                        cont = MessageBox.Show(a, "Add another Sub-type", "Continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+                    }
+                }
+            }
+            return new Tuple<bool, string, Dictionary<string, string>>(accepted, path, Children);
         }
         public void HideSelectPath() {
+            a.Close();
            // ShowInTaskbar = false;
         }
         public void UpdateQueue(List<string> QueueList) {
@@ -79,7 +124,8 @@ namespace Surtur_Watcher {
                     if (item.Equals(surtur.FoundFile)) continue;
                     string FileType = surtur.CleanUpType(Path.GetExtension(item));
                     if (FileType.Equals(surtur.Format)) {
-                        FullPaths.Add( Path.GetFileName(item), item);
+                        if(!FullPaths.ContainsKey(Path.GetFileName(item)))
+                            FullPaths.Add( Path.GetFileName(item), item);
                         if(marker.Contains(Path.GetFileName(item)))
                             checkedListBox1.Items.Add(Path.GetFileName(item),true);
                         else
@@ -230,13 +276,21 @@ namespace Surtur_Watcher {
         }
 
         private void ToolStripMenuItem1_Click(object sender, EventArgs e) {
-            List<string> scannedFiles = new List<string>();
-            foreach(string path in surtur.DH.AllWatchedPaths) {
-                foreach(string File in Directory.EnumerateFiles(path)) {
-                    scannedFiles.Add(File);
+            if (surtur.DH.Queue.Count > 0) {
+               if(MessageBox.Show("Stop sorting all items currently in the queue and begin a new scan?", "Stop current sort", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes) {
+                    while(surtur.DH.Queue.Count>0)
+                        surtur.DH.Pop();
+                } else {
+                    return;
                 }
             }
-            surtur.HandleFileChanges(scannedFiles);
+            a = new BlackgroundForm();
+            a.Show();
+            Scan scn = new Scan(surtur,a);
+            scn.Show();
+            scn.BringToFront();
+            scn.TopMost = true;
+           
         }
 
         private void Timer1_Tick(object sender, EventArgs e) {
